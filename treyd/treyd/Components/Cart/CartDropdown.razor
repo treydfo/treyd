@@ -1,0 +1,42 @@
+﻿@inject StateContainer StateContainer
+@implements IDisposable
+
+<li class="nav-item">
+    <NavLink class="nav-item nav-link p-0" role="button" @onclick="@Show" style="display: flex; justify-content: center; align-items: center;">
+        <span class="fa-stack fa-1x fa-lg"><i class="fas fa-shopping-bag fa-stack-2x"></i><span class="fa fa-stack-1x" data-fa-transform="shrink-8 down-3" style="color: #ffffff; margin-top: 6px; font-size: 13px; font-weight: 500; font-family: 'Oswald', sans-serif;">@CartStateProvider.GetCartItemCount()</span></span>&nbsp;&nbsp;
+    </NavLink>
+    @if (this.show)
+    {
+        <div class='cart-dropdown'>
+            <div class='cart-items'>
+                <CartItem DropdownItem="true" />
+            </div>
+            <div class="row text-info justify-content-end m-2" style="font-size: 20px;">
+                Í alt: @CartStateProvider.GetCartItemTotal().ToString("N0") KR
+            </div>
+            <a class="btn btn-info btn-lg" href="/brukari/kassi" @onclick="Show" type="button">Far til kassan</a>
+        </div>
+    }
+</li>
+
+@code {
+    private bool show { get; set; } = false;
+
+    [CascadingParameter]
+    CartStateProvider CartStateProvider { get; set; }
+
+    private void Show()
+    {
+        show = !show;
+    }
+
+    protected override void OnInitialized()
+    {
+        CartStateProvider.OnChange += StateHasChanged;
+    }
+
+    public void Dispose()
+    {
+        CartStateProvider.OnChange -= StateHasChanged;
+    }
+}

@@ -1,0 +1,57 @@
+﻿@using treyd.Models
+@using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
+@inject ProtectedLocalStorage LocalStorage
+
+@if (hasLoaded)
+{
+    <CascadingValue Value="@this">
+        @ChildContent
+    </CascadingValue>
+}
+else
+{
+    <LoadingScreen />
+}
+
+@code {
+
+    [Parameter] public RenderFragment ChildContent { get; set; }
+
+    public CartModel Cart { get; set; }
+
+    private bool hasLoaded;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        var result = await LocalStorage.GetAsync<CartModel>("cart");
+        Cart = result.Success ? result.Value : new CartModel();
+
+        if (Cart == null || Cart.CartItems.Count == 0)
+        {
+            Cart = new CartModel();
+        }
+
+        hasLoaded = true;
+    }
+
+    public async Task SaveChangesAsync()
+    {
+        await LocalStorage.SetAsync("cart", Cart);
+
+        NotifyStateChanged();
+    }
+
+    public int GetCartItemCount()
+    {
+        return Cart.Count;
+    }
+
+    public double GetCartItemTotal()
+    {
+        return Cart.Total;
+    }
+
+    public event Action OnChange;
+
+    public void NotifyStateChanged() => OnChange?.Invoke();
+}

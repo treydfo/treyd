@@ -1,0 +1,225 @@
+﻿@using DataLibrary
+@using Microsoft.Extensions.Configuration
+@using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
+
+@inject IDataAccess _data
+@inject IConfiguration _config
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject ProtectedSessionStorage SessionStorage
+@inject NavigationManager NavigationManager
+@inject StateContainer StateContainer
+
+<div class="form-signin" style="margin-top: 100px;">
+    <h1 class="h3 mb-3 fw-normal text-info text-center">Rita inn</h1>
+    <hr />
+    <button href="#" class="w-100 fb btn btn-lg text-left" @*@onclick="FacebookSignIn" *@><i class="fab fa-facebook"></i> Halt fram við Facebook</button>
+    <button href="#" class="w-100 google btn btn-lg text-left" style="margin-top: 10px;"><i class="fab fa-google"></i> Halt fram við Google</button>
+    <EditForm Model="@User" OnValidSubmit="ValidateUser">
+        <DataAnnotationsValidator />
+        <div class="form-floating" style="margin-top: 30px;">
+            <div class="input-1">
+                <SfTextBox CssClass="e-outline" Placeholder="Teldupostur" Type="InputType.Email" FloatLabelType="@FloatLabelType.Auto" @bind-Value="@User.Email"></SfTextBox>
+                <ValidationMessage style="color: red;" For="@(() => User.Email)" />
+                <p style="color: red; @emailErrMsg">Telduposturin er ikki rættur</p>
+            </div>
+        </div>
+        <div class="form-floating" style="margin-top: 10px;">
+            <div class="input-2">
+                <SfTextBox CssClass="e-outline" Placeholder="Loyniorð" Type="InputType.Password" FloatLabelType="@FloatLabelType.Auto" @bind-Value="@User.Password"></SfTextBox>
+                <ValidationMessage style="color: red;" For="@(() => User.Password)" />
+                <p style="color: red; @passwordErrMsg">Loyniorðið er ikki rætt!</p>
+            </div>
+        </div>
+
+        <div class="checkbox mb-3 text-info text-center">
+            <label>
+                <input type="checkbox" value="remember-me"> Minst til mín
+            </label>
+        </div>
+        <button class="w-100 btn btn-lg btn-info" type="submit">Rita inn</button>
+        <p class="text-center mt-3">
+            <a class="text-decoration-none text-info" href="/gloymt">Gloymt loyniorð?</a>
+        </p>
+    </EditForm>
+    <hr />
+    <p class="text-center text-info">ella</p>
+    <a class="w-100 btn btn-lg btn-outline-info" type="submit" href="/stovna_brukara">Stovna brúkara</a>
+</div>
+
+@code {
+    protected UserLoginModel User { get; set; } = new UserLoginModel();
+
+    private UserModel UserModel { get; set; }
+    private UserModel SubscribedUser { get; set; }
+
+    private string emailErrMsg;
+    private string passwordErrMsg;
+
+    protected override async Task OnInitializedAsync()
+    {
+        this.emailErrMsg = "display: none;";
+        this.passwordErrMsg = "display: none;";
+    }
+
+    protected async Task<bool> LoadUser()
+    {
+        try
+        {
+            string sql = "select * from users where Email = @Email";
+            UserModel = await _data.QuerySingle<UserModel, dynamic>(sql, new { Email = this.User.Email }, _config.GetConnectionString("default"));
+
+            return await Task.FromResult(true);
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+
+            return await Task.FromResult(false);
+        }
+    }
+
+    protected async Task<bool> LoadSubscription()
+    {
+        try
+        {
+            string sql1 = "select * from users join subscriptions on users.UserID = subscriptions.UserID where Email = @Email";
+            SubscribedUser = await _data.QuerySingle<UserModel, dynamic>(sql1, new { Email = User.Email }, _config.GetConnectionString("default"));
+
+            return await Task.FromResult(true);
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+
+            return await Task.FromResult(true);
+        }
+    }
+
+    private async Task<bool> ValidateUser()
+    {
+        await LoadUser();
+        await LoadSubscription();
+
+        if (UserModel != null)
+        {
+            if (UserModel.Role == "Company" || UserModel.Role == "Admin")
+            {
+                if (SubscribedUser != null)
+                {
+                    try
+                    {
+                        byte[] salt = Convert.FromBase64String(UserModel.PasswordSalt);
+
+                        string passwordHash = ((TreydAuthenticationStateProvider)AuthenticationStateProvider).HashPassword(User.Password, salt);
+
+                        if (UserModel.Password == passwordHash)
+                        {
+                            ((TreydAuthenticationStateProvider)AuthenticationStateProvider).SetAuthenticationState(UserModel.CompanyName, UserModel.Role, UserModel.Email);
+
+                            StateContainer.SetIsLoggedOut(false);
+                            StateContainer.SetIsLoggedIn(true);
+
+                            NavigationManager.NavigateTo("/brukari/styripultur");
+
+                            string userAuth = UserModel.CompanyName + " " + UserModel.Role + " " + UserModel.Email;
+
+                            await SessionStorage.SetAsync("user", userAuth);
+                        }
+                        else
+                        {
+                            this.emailErrMsg = "display: none;";
+                            this.passwordErrMsg = "display: initial;";
+                        }
+
+                        return await Task.FromResult(true);
+                    }
+                    catch (Exception e)
+                    {
+                        Console.WriteLine(e);
+
+                        return await Task.FromResult(false);
+                    }
+                }
+                else
+                {
+                    this.passwordErrMsg = "display: none;";
+                    this.emailErrMsg = "display: initial;";
+
+                    await DeleteUser(UserModel.Email);
+
+                    return await Task.FromResult(false);
+                }
+            }
+            else
+            {
+                try
+                {
+                    byte[] salt = Convert.FromBase64String(UserModel.PasswordSalt);
+
+                    string passwordHash = ((TreydAuthenticationStateProvider)AuthenticationStateProvider).HashPassword(User.Password, salt);
+
+                    if (UserModel.Password == passwordHash)
+                    {
+                        string name;
+
+                        name = UserModel.FirstName + " " + UserModel.LastName;
+
+                        ((TreydAuthenticationStateProvider)AuthenticationStateProvider).SetAuthenticationState(name, UserModel.Role, UserModel.Email);
+
+                        StateContainer.SetIsLoggedOut(false);
+                        StateContainer.SetIsLoggedIn(true);
+
+                        NavigationManager.NavigateTo("/");
+
+                        string userAuth = name + " " + UserModel.Role + " " + UserModel.Email;
+
+                        await SessionStorage.SetAsync("user", userAuth);
+                    }
+                    else
+                    {
+                        this.emailErrMsg = "display: none;";
+                        this.passwordErrMsg = "display: initial;";
+                    }
+
+                    return await Task.FromResult(true);
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e);
+
+                    return await Task.FromResult(false);
+                }
+            }
+        }
+        else
+        {
+            this.passwordErrMsg = "display: none;";
+            this.emailErrMsg = "display: initial;";
+
+            return await Task.FromResult(false);
+        }
+    }
+
+    protected async Task<bool> DeleteUser(string email)
+    {
+        try
+        {
+            string sql = "delete from users where Email = @Email";
+
+            await _data.SaveData(sql, new { Email = email }, _config.GetConnectionString("default"));
+
+            return await Task.FromResult(true);
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+
+            return await Task.FromResult(false);
+        }
+    }
+
+    @*private void FacebookSignIn()
+        {
+            _navigationManager.NavigateTo("user/FacebookSignIn", true);
+        }*@
+}

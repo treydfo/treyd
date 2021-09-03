@@ -1,0 +1,27 @@
+﻿@page "/brukari/vangi"
+
+@using DataLibrary
+@using Microsoft.Extensions.Configuration
+@using Microsoft.AspNetCore.WebUtilities;
+@using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
+@using QuickPay.SDK
+
+@inject IDataAccess _data
+@inject IConfiguration _config
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject ProtectedSessionStorage SessionStorage
+@inject NavigationManager NavigationManager
+@inject StateContainer StateContainer
+
+<AuthorizeView Context="auth">
+    <Authorized>
+        <AdminProfile />
+    </Authorized>
+    <NotAuthorized>
+        <IndexRedirect />
+    </NotAuthorized>
+</AuthorizeView>
+
+@code {
+
+} 

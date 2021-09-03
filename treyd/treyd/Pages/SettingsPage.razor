@@ -1,0 +1,12 @@
+﻿@page "/stillingar"
+
+@inject AuthenticationStateProvider AuthenticationStateProvider
+
+<HelpAndSupport />
+
+@code {
+    protected override async Task OnInitializedAsync()
+    {
+        await ((TreydAuthenticationStateProvider)AuthenticationStateProvider).GetAuthenticationStateAsync();
+    }
+}

@@ -1,0 +1,36 @@
+﻿<div class="card c-content @CardBgColor o-hidden h-100">
+    <a class="text-decoration-none @CardTextColor" href="@CardLink">
+        <div class="card-body">
+            <div class="card-body-icon">
+                <i class="@IconClass"></i>
+            </div>
+            <div class="mr-5 c-title"><strong>@CardTitle</strong></div>
+        </div>
+    </a>
+    <a class="card-footer @FooterColor clearfix small z-1" href="@CardLink">
+        <span class="float-left">@FooterText</span>
+    </a>
+</div>
+
+@code {
+    [Parameter]
+    public string IconClass { get; set; }
+
+    [Parameter]
+    public string CardTitle { get; set; }
+
+    [Parameter]
+    public string FooterText { get; set; }
+
+    [Parameter]
+    public string CardTextColor { get; set; }
+
+    [Parameter]
+    public string CardBgColor { get; set; }
+
+    [Parameter]
+    public string FooterColor { get; set; }
+
+    [Parameter]
+    public string CardLink { get; set; }
+}

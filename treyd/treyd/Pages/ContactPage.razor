@@ -1,0 +1,12 @@
+﻿@page "/samband"
+
+@inject AuthenticationStateProvider AuthenticationStateProvider
+
+<h3>Samband</h3>
+
+@code {
+    protected override async Task OnInitializedAsync()
+    {
+        await ((TreydAuthenticationStateProvider)AuthenticationStateProvider).GetAuthenticationStateAsync();
+    }
+}

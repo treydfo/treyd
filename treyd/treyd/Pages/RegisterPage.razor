@@ -1,0 +1,20 @@
+﻿@page "/stovna_brukara"
+
+<AuthorizeView>
+    <Authorized>
+        @if (context.User.IsInRole("Company") || context.User.IsInRole("Admin"))
+        {
+            <DashboardRedirect />
+        }
+        else
+        {
+            <IndexRedirect />
+        }
+    </Authorized>
+</AuthorizeView>
+
+<Register />
+
+@code {
+
+}

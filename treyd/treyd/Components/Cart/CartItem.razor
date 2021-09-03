@@ -1,0 +1,174 @@
+﻿@inject StateContainer StateContainer
+@implements IDisposable
+
+@if (CartStateProvider != null && CartStateProvider.Cart.CartItems.Count > 0)
+{
+    if (this.DropdownItem == true)
+    {
+        @foreach (var item in CartStateProvider.Cart.CartItems)
+        {
+            <br />
+            <div class="cart-item text-info">
+                <img style="object-fit: contain;" src="@item.Product.ImagePath" />
+                <div class='item-details'>
+                    <span class='name' style="overflow: inherit;">@item.Product.Name</span>
+                    @if (item.Product.Discount != null || item.Product.Discount != 0)
+                    {
+                        <span class='price'>@item.Quantity x @item.Product.GetDiscountPrice.ToString("N0") KR</span>
+                    }
+                    else
+                    {
+                        <span class='price'>@item.Quantity x @item.Product.Price.ToString("N0") KR</span>
+                    }
+                    <span>
+                        <i class="fas fa-minus-circle fa-lg" role="button" @onclick="@(() => DecrementItem(@item))"></i>
+                        &nbsp;&nbsp;&nbsp;
+                        <i class="fas fa-plus-circle fa-lg" role="button" @onclick="@(() => IncrementItem(@item))"></i>
+                        &nbsp;&nbsp;&nbsp;
+                        <i class="fas fa-times-circle fa-lg" role="button" @onclick="@(() => RemoveItem(@item))" style="color: red;"></i>
+                    </span>
+                </div>
+            </div>
+        }
+    }
+    else
+    {
+        bool lightGrey = false;
+
+        @foreach (var item in CartStateProvider.Cart.CartItems)
+        {
+            if (!lightGrey)
+            {
+                <li class="list-group-item d-flex justify-content-between lh-sm">
+                    <div class="row col-12 align-items-center text-info">
+                        <div class="col-2 text-center">
+                            @*<img style="object-fit: contain;" src="@item.Product.ImagePath" />*@
+                            <div class="align-items-center overflow-hidden" style="max-width: 180px; max-height: 100px; min-width: 180px; min-height: 100px; background: url(@item.Product.ImagePath); background-position: 50% 50%; background-size: cover;">
+
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="row" style="font-size: 24px;">
+                                @item.Product.Name
+                            </div>
+                            <div class="row text-muted" style="font-size: 20px;">
+                                @item.Product.Description
+                            </div>
+                        </div>
+                        <div class="col-2 text-center" style="font-size: 20px;">
+                            <span>
+                                <i class="fas fa-minus-circle fa-lg" role="button" @onclick="@(() => DecrementItem(@item))"></i>
+                                &nbsp;@item.Quantity&nbsp;
+                                <i class="fas fa-plus-circle fa-lg" role="button" @onclick="@(() => IncrementItem(@item))"></i>
+                            </span>
+                        </div>
+                        @if (item.Product.Discount != null || item.Product.Discount != 0)
+                        {
+                            <div class="col-2 text-center" style="font-size: 20px;">
+                                    @item.Product.GetDiscountPrice.ToString("N2") KR
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="col-2 text-center" style="font-size: 20px;">
+                                    @item.Product.Price.ToString("N2") KR
+                            </div>
+                        }
+                        <div class="col-2 text-center" style="font-size: 20px;">
+                            <i class="fas fa-times-circle fa-lg" role="button" @onclick="@(() => RemoveItem(@item))" style="color: red;"></i>
+                        </div>
+                    </div>
+                </li>
+                lightGrey = true;
+             }
+             else
+             {
+                <li class="list-group-item d-flex justify-content-between lh-sm" style="background-color: #efefef">
+                    <div class="row col-12 align-items-center text-info">
+                        <div class="col-2 text-center">
+                            @*<img style="object-fit: contain;" src="@item.Product.ImagePath" />*@
+                            <div class="align-items-center overflow-hidden" style="max-width: 180px; max-height: 100px; min-width: 180px; min-height: 100px; background: url(@item.Product.ImagePath); background-position: 50% 50%; background-size: cover;">
+
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="row" style="font-size: 24px;">
+                                @item.Product.Name
+                            </div>
+                            <div class="row text-muted" style="font-size: 20px;">
+                                @item.Product.Description
+                            </div>
+                        </div>
+                        <div class="col-2 text-center" style="font-size: 20px;">
+                            <span>
+                                <i class="fas fa-minus-circle fa-lg" role="button" @onclick="@(() => DecrementItem(@item))"></i>
+                                &nbsp;@item.Quantity&nbsp;
+                                <i class="fas fa-plus-circle fa-lg" role="button" @onclick="@(() => IncrementItem(@item))"></i>
+                            </span>
+                        </div>
+                        <div class="col-2 text-center" style="font-size: 20px;">
+                            @item.Product.Price.ToString("N2") KR
+                        </div>
+                        <div class="col-2 text-center" style="font-size: 20px;">
+                            <i class="fas fa-times-circle fa-lg" role="button" @onclick="@(() => RemoveItem(@item))" style="color: red;"></i>
+                        </div>
+                    </div>
+                </li>
+                lightGrey = false;
+             }
+         }
+    }
+}
+else
+{
+    <span class="cart-empty text-center mt-5 mb-5 text-info">Kurvin er tóm</span>
+}
+
+@code {
+    [CascadingParameter] CartStateProvider CartStateProvider { get; set; }
+
+    [Parameter] public bool DropdownItem { get; set; }
+
+    protected override void OnInitialized()
+    {
+        CartStateProvider.OnChange += StateHasChanged;
+    }
+
+    async Task DecrementItem(CartItemModel item)
+    {
+        item.Quantity--;
+
+        if (item.Quantity == 0)
+        {
+            CartStateProvider.Cart.CartItems.Remove(item); // Removing item from cart
+            await CartStateProvider.SaveChangesAsync(); // Update cart and save to local storage
+
+            CartStateProvider.NotifyStateChanged();
+        }
+
+        await CartStateProvider.SaveChangesAsync(); // Update cart and save to local storage
+
+        CartStateProvider.NotifyStateChanged();
+    }
+
+    async Task IncrementItem(CartItemModel item)
+    {
+        item.Quantity++;
+        await CartStateProvider.SaveChangesAsync(); // Update cart and save to local storage
+
+        CartStateProvider.NotifyStateChanged();
+    }
+
+    async Task RemoveItem(CartItemModel item)
+    {
+        CartStateProvider.Cart.CartItems.Remove(item); // Removing item from cart
+        await CartStateProvider.SaveChangesAsync(); // Update cart and save to local storage
+
+        CartStateProvider.NotifyStateChanged();
+    }
+
+    public void Dispose()
+    {
+        CartStateProvider.OnChange -= StateHasChanged;
+    }
+}

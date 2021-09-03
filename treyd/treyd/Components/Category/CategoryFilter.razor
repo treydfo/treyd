@@ -1,0 +1,213 @@
+﻿@using DataLibrary
+@using Microsoft.Extensions.Configuration
+@using Syncfusion.Blazor.Navigations
+@using Syncfusion.Blazor.Data
+@using Syncfusion.Blazor.DropDowns
+@using System.Diagnostics
+
+@inject IDataAccess _data
+@inject IConfiguration _config
+@inject StateContainer StateContainer
+
+@if (Categories == null)
+{
+    <LoadingScreen />
+}
+else
+{
+    if (ViewMode == "CheckBoxMode")
+    {
+        <SfTreeView TValue="CategoryModel" @ref="tree" ShowCheckBox="true" AutoCheck="true">
+            <TreeViewEvents TValue="CategoryModel" NodeChecked="NodeChecked"></TreeViewEvents>
+            <TreeViewFieldsSettings TValue="CategoryModel" Id="CategoryID" DataSource="@Categories" Text="Name" ParentID="ParentCategoryID" HasChildren="HasSubCategories" Expanded="Expanded" IsChecked="IsChecked"></TreeViewFieldsSettings>
+        </SfTreeView>
+    }
+    if (ViewMode == "DropDownMode")
+    {
+        <select class="form-control" style="cursor: pointer;" @onchange="SelectCategoryName">
+            <option value="Vel vørubólk">Vel vørubólk</option>
+            @foreach (var category in Categories)
+            {
+                <option value=@category.Name>@category.Name</option>
+            }
+        </select>
+    }
+}
+
+@code {
+    // Source: https://blazor.syncfusion.com/documentation/treeview/how-to/check-uncheck-the-checkbox-on-clicking-the-tree-node-text/
+    // Source: https://blazor.syncfusion.com/documentation/treeview/how-to/get-all-child-nodes/
+
+    [Parameter] public string ViewMode { get; set; }
+
+    private SfTreeView<CategoryModel> tree; // Direct link to the Syncfusion Tree containing nodes of the type CategoryModel
+    private List<CategoryModel> NodeDetails; // List attached to tree for getting tree information
+    private List<CategoryModel> Categories; // List containing all categories of type CategoryModel
+
+    // StateContainer Variables
+    private List<CategoryModel> CheckedCategoryNodes = new List<CategoryModel>(); // List containing checked nodes of the type CategoryModel
+    private CategoryModel Category = new CategoryModel();
+
+    private void SelectCategoryName(Microsoft.AspNetCore.Components.ChangeEventArgs args)
+    {
+        string selectedCategoryName = args.Value.ToString();
+
+        foreach (var category in Categories)
+        {
+            if (category.Name == selectedCategoryName)
+            {
+                Category = category;
+            }
+        }
+
+        SetCategoryState();
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadCategories();
+    }
+
+    protected async Task<bool> LoadCategories()
+    {
+        try
+        {
+            string sql = "select * from categories";
+            Categories = await _data.LoadData<CategoryModel, dynamic>(sql, new { }, _config.GetConnectionString("default"));
+
+            return await Task.FromResult(true);
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+
+            return await Task.FromResult(false);
+        }
+    }
+
+    private void SetCategoryState()
+    {
+        StateContainer.GetCategoryState(CheckedCategoryNodes, Category);
+    }
+
+    async void NodeChecked(NodeCheckEventArgs args)
+    {
+        NodeDetails = this.tree.GetTreeData(args.NodeData.Id); // and is in cateogyr loist
+
+        if (NodeDetails[0].IsChecked == false && CheckedCategoryNodes.Contains(CheckedCategoryNodes.SingleOrDefault(c => c.CategoryID == NodeDetails[0].CategoryID)))
+        {
+            args.NodeData.IsChecked = "false";
+            NodeDetails[0].IsChecked = false;
+
+            if (args.NodeData.HasChildren == true)
+            {
+                var categoryToRemove = CheckedCategoryNodes.SingleOrDefault(c => c.CategoryID == NodeDetails[0].CategoryID);
+                CheckedCategoryNodes.Remove(categoryToRemove);
+
+                foreach (var category in Categories)
+                {
+                    if (category.ParentCategoryID == int.Parse(args.NodeData.Id))
+                    {
+                        category.IsChecked = false;
+                        CheckedCategoryNodes.Remove(category);
+                    }
+                }
+            }
+            else
+            {
+                var childNode = CheckedCategoryNodes.SingleOrDefault(c => c.CategoryID == NodeDetails[0].CategoryID);
+                var parentNode = CheckedCategoryNodes.SingleOrDefault(c => c.CategoryID == childNode.ParentCategoryID);
+
+                if (parentNode != null && parentNode.IsChecked == true)
+                {
+                    parentNode.IsChecked = false;
+                    CheckedCategoryNodes.Remove(parentNode);
+                }
+
+                CheckedCategoryNodes.Remove(childNode);
+            }
+
+            SetCategoryState();
+        }
+        else
+        {
+            NodeDetails[0].IsChecked = true;
+
+            int? parentId = 0;
+
+            if (NodeDetails[0].HasSubCategories != null)
+            {
+                parentId = NodeDetails[0].ParentCategoryID;
+            }
+
+            if (NodeDetails[0].HasSubCategories == true)
+            {
+                foreach (var category in Categories)
+                {
+                    if (category.CategoryID == NodeDetails[0].CategoryID)
+                    {
+                        CheckedCategoryNodes.Add(category);
+                    }
+
+                    if (category.ParentCategoryID == NodeDetails[0].CategoryID && category.IsChecked == false)
+                    {
+                        category.IsChecked = true;
+                        CheckedCategoryNodes.Add(category);
+                    }
+                }
+            }
+            else
+            {
+                foreach (var category in Categories)
+                {
+                    if (category.CategoryID == NodeDetails[0].CategoryID)
+                    {
+                        CheckedCategoryNodes.Add(category);
+                    }
+                }
+            }
+
+            if (NodeDetails[0].ParentCategoryID != 0 && NodeDetails[0].ParentCategoryID != null)
+            {
+                var childNode2 = CheckedCategoryNodes.SingleOrDefault(c => c.CategoryID == NodeDetails[0].CategoryID);
+                var parentNode2 = Categories.SingleOrDefault(c => c.CategoryID == childNode2.ParentCategoryID);
+
+                if (parentNode2 != null)
+                {
+                    // If every node under parent is selected, then check the parent node...
+                    int parentCategoryCount = 0;
+
+                    foreach (var category in Categories)
+                    {
+                        if (category.ParentCategoryID == childNode2.ParentCategoryID)
+                        {
+                            parentCategoryCount++;
+                        }
+                    }
+
+                    int checkedParentCategoryCount = 0;
+
+                    foreach (var category in CheckedCategoryNodes)
+                    {
+                        if (category.ParentCategoryID == parentNode2.CategoryID)
+                        {
+                            checkedParentCategoryCount++;
+                        }
+                    }
+
+                    if (parentCategoryCount == checkedParentCategoryCount)
+                    {
+                        parentNode2.IsChecked = true;
+                        CheckedCategoryNodes.Add(parentNode2);
+                    }
+                    else
+                    {
+                        parentNode2.IsChecked = false;
+                    }
+                }
+            }
+
+            SetCategoryState();
+        }
+    }
+}
