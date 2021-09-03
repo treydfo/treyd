@@ -1,0 +1,31 @@
+﻿@page "/brukari/hjalp"
+
+@inject AuthenticationStateProvider AuthenticationStateProvider
+
+<AuthorizeView>
+    <Authorized>
+        <div class="content-wrapper">
+            <div class="container-fluid">
+                <div class="row">
+                    <div class="col-2">
+                        <AdminSidebar />
+                    </div>
+                    <div class="col-10">
+                        <h2 class="pb-4 pt-4 text-info">HJÁLP</h2>
+                        <HelpAndSupport />
+                    </div>
+                </div>
+            </div>
+        </div>
+    </Authorized>
+    <NotAuthorized>
+        <IndexRedirect />
+    </NotAuthorized>
+</AuthorizeView>
+
+@code {
+    protected override async Task OnInitializedAsync()
+    {
+        await ((TreydAuthenticationStateProvider)AuthenticationStateProvider).GetAuthenticationStateAsync();
+    }
+}

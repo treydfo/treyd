@@ -1,0 +1,47 @@
+﻿@media (min-width: 992px) {
+    :root {
+        --lg-up-sidebar-display: none;
+    }
+
+    .lg-up-sidebar {
+        display: var(--lg-up-sidebar-display);
+    }
+
+    h3 {
+        font-size: 23px;
+    }
+}
+
+/* If screen size is less than 992px wide */
+@media (max-width: 992px) {
+    :root {
+        --md-down-sidebar-display: none;
+        --modal-backdrop-display: none;
+    }
+
+    .md-up-sidebar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        bottom: 0;
+        top: 0;
+        z-index: 1080;
+        width: 20rem;
+        max-width: 22rem;
+        background-color: white;
+        border-right: 0 solid rgba(0,0,0,0);
+        display: var(--md-down-sidebar-display)
+    }
+
+    .modal-backdrop {
+        position: fixed;
+        top: 0;
+        left: 0;
+        z-index: 1040;
+        width: 100vw;
+        height: 100vh;
+        background-color: #000;
+        opacity: .5;
+        display: var(--modal-backdrop-display)
+    }
+}

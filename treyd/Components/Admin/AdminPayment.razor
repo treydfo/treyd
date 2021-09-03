@@ -1,0 +1,404 @@
+﻿@using DataLibrary;
+@using Microsoft.Extensions.Configuration;
+@using QuickPay.SDK;
+@using Microsoft.AspNetCore.WebUtilities;
+
+@inject NavigationManager NavigationManager
+@inject IDataAccess _data
+@inject IConfiguration _config
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject ProtectedSessionStorage SessionStorage
+@inject StateContainer StateContainer
+
+<AuthorizeView>
+    <Authorized>
+        @if (context.User.IsInRole("Company") || context.User.IsInRole("Admin"))
+        {
+            @if (updated == "true")
+            {
+                <div class="alert alert-success alert-dismissible fade show mt-4" role="alert">
+                    <strong>Dagføringin</strong> av tínari skráseting <strong>eydnaðist</strong>.
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            }
+            else if (updated == "false")
+            {
+                <div class="alert alert-danger alert-dismissible fade show mt-4" role="alert">
+                    <strong>Dagføringin</strong> av tínari skráseting <strong>eydnaðist ikki</strong>.
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            }
+            else if (activated == "true")
+            {
+                <div class="alert alert-success alert-dismissible fade show mt-4" role="alert">
+                    <strong>Virkjanin</strong> av tínari skráseting <strong>eydnaðist</strong>.
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            }
+            else if (activated == "false")
+            {
+                <div class="alert alert-danger alert-dismissible fade show mt-4" role="alert">
+                    <strong>Virkanin</strong> av tínari skráseting <strong>eydnaðist ikki</strong>.
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            }
+            else if (cancelled == "true")
+            {
+                <div class="alert alert-success alert-dismissible fade show mt-4" role="alert">
+                    <strong>Óvirkjanin</strong> av tínari skráseting <strong>eydnaðist</strong>.
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close" @onclick="CancelAlert"></button>
+                </div>
+            }
+
+            <div class="container">
+                @if (SubscriptionModel != null)
+                {
+                    <div class="pb-4">
+                        Skrásetingarstøða:
+                        @if (SubscriptionModel.Status == "Active")
+                        {
+                            <span class="badge bg-success p-2">
+                                Virkið
+                            </span>
+
+                            <div>
+                                <table class="table">
+                                    <thead>
+                                        <tr>
+                                            <th scope="col">Korthaldari</th>
+                                            <th scope="col">Slag</th>
+                                            <th scope="col">Endar við</th>
+                                            <th scope="col">Gongur út</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>@SubscriptionModel.Cardholder</td>
+                                            <td>@SubscriptionModel.Brand</td>
+                                            <td>@SubscriptionModel.Last4</td>
+                                            <td>@SubscriptionModel.ExpiryMonth/@SubscriptionModel.ExpiryYear</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        }
+                        else
+                        {
+                            <span class="badge bg-warning p-2">
+                                Óvirkið
+                            </span>
+                        }
+                    </div>
+
+                    @if (SubscriptionModel.Status == "Cancelled")
+                    {
+                        <button class="btn btn-success m-2" @onclick="ActivateSubscription">Virkja skráseting</button>
+                    }
+                    else
+                    {
+                        <button class="btn btn-info m-2" @onclick="UpdateSubscription">Dagfør skráseting</button>
+                        <button class="btn btn-warning m-2" @onclick="CancelSubscription">Óvirkja skráseting</button>
+                    }
+
+                    <div class="row">
+                        <div class="container">
+                            <h3>Skrásetingargjøld</h3>
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th scope="col">#</th>
+                                        <th scope="col">Gjaldsnummar</th>
+                                        <th scope="col">Upphædd</th>
+                                        <th scope="col">Dagført</th>
+                                        <th scope="col">Støða</th>
+                                        <th scope="col">Dagfesting</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var payment in SubscriptionPayments)
+                                    {
+                                        <tr>
+                                            <th scope="row">@counterSubscriptions</th>
+                                            <td>@payment.PaymentNumber</td>
+                                            <td>@payment.Amount</td>
+                                            <td>@payment.Updated</td>
+                                            <td>@payment.Status</td>
+                                            <td>@payment.Created</td>
+                                        </tr>
+                                        counterSubscriptions++;
+                                    }
+                                </tbody>
+                            </table>
+                            @if (SubscriptionPayments.Count == 0)
+                            {
+                                <div class="text-danger text-center">Ongi skrásetingargjøld</div>
+                            }
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="container">
+                            <h3>Vørugjøld</h3>
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th scope="col">#</th>
+                                        <th scope="col">Gjaldsnummar</th>
+                                        <th scope="col">Upphædd</th>
+                                        <th scope="col">Støða</th>
+                                        <th scope="col">Dagfesting</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var payment in Payments)
+                                    {
+                                        <tr>
+                                            <th scope="row">@counterPayments</th>
+                                            <td>@payment.PaymentNumber</td>
+                                            <td>@payment.Amount</td>
+                                            <td>@payment.Status</td>
+                                            <td>@payment.Created</td>
+                                        </tr>
+                                        counterPayments++;
+                                    }
+                                </tbody>
+                            </table>
+                            @if (Payments.Count == 0)
+                            {
+                                <div class="text-danger text-center">Ongi vørugjøld</div>
+                            }
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+        else
+        {
+            <IndexRedirect />
+        }
+    </Authorized>
+    <NotAuthorized>
+        <LoginRedirect />
+    </NotAuthorized>
+</AuthorizeView>
+
+@code {
+    private QuickPayClient QuickPayClient = new QuickPayClient(QuickPayConfig.API_KEY, QuickPayConfig.PRIVATE_KEY, QuickPayConfig.USER);
+
+    private List<PaymentModel> Payments = new List<PaymentModel>();
+    private List<PaymentModel> SubscriptionPayments = new List<PaymentModel>();
+
+    private SubscriptionModel SubscriptionModel { get; set; }
+    private UserModel UserModel { get; set; }
+
+    private string name;
+    private string role;
+    private string email;
+    private string updated;
+    private string activated;
+    private string cancelled;
+
+    private int counterSubscriptions = 1;
+    private int counterPayments = 1;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (await ((TreydAuthenticationStateProvider)AuthenticationStateProvider).GetAuthenticationStateAsync() is not null)
+        {
+            var auth = await SessionStorage.GetAsync<string>("user");
+
+            if (auth.Value != null)
+            {
+                var data = auth.Value.Split(" ");
+                var strArr = data.Take(data.Length - 2);
+                this.name = string.Join(" ", strArr);
+                this.role = data[data.Length - 2];
+                this.email = data[data.Length - 1];
+            }
+        }
+
+        await LoadSubscribedUser();
+        await LoadCurrentSubscription();
+        await LoadProductPayments();
+        await LoadSubscriptionPayments();
+
+        var uri = NavigationManager.ToAbsoluteUri(NavigationManager.Uri);
+
+        if (QueryHelpers.ParseQuery(uri.Query).TryGetValue("u", out var updated))
+        {
+            this.updated = updated.First();
+        }
+        else if (QueryHelpers.ParseQuery(uri.Query).TryGetValue("a", out var activated))
+        {
+            this.activated = activated.First();
+        }
+    }
+
+    protected async Task<bool> LoadSubscribedUser()
+    {
+        try
+        {
+            string sql = "select * from users join subscriptions on users.UserID = subscriptions.UserID where Email = @Email";
+            UserModel = await _data.QuerySingle<UserModel, dynamic>(sql, new { Email = this.email }, _config.GetConnectionString("default"));
+
+            return await Task.FromResult(true);
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+
+            return await Task.FromResult(true);
+        }
+    }
+
+    protected async Task LoadProductPayments()
+    {
+        try
+        {
+            string sql = "select * from payments where UserID = @UserID and Type = @Type";
+            Payments = await _data.LoadData<PaymentModel, dynamic>(
+                sql, new { UserID = UserModel.UserID, Type = "Payment" }, _config.GetConnectionString("default"));
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+        }
+    }
+
+    protected async Task LoadSubscriptionPayments()
+    {
+        try
+        {
+            // Select all payments that have the type recurring and match the current logged in user
+            string sql = "select * from payments where UserID = @UserID and Type = @Type";
+            SubscriptionPayments = await _data.LoadData<PaymentModel, dynamic>(sql, new { UserID = UserModel.UserID, Type = "Recurring" }, _config.GetConnectionString("default"));
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+        }
+    }
+
+    protected async Task<bool> LoadCurrentSubscription()
+    {
+        try
+        {
+            string sql = "select * from users join subscriptions on users.UserID = subscriptions.UserID where Email = @Email";
+            SubscriptionModel = await _data.QuerySingle<SubscriptionModel, dynamic>(sql, new { Email = this.email }, _config.GetConnectionString("default"));
+
+            return await Task.FromResult(true);
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+
+            return await Task.FromResult(false);
+        }
+    }
+
+    /// <summary>
+    /// This method creates a new subscription for the authorized user. The QuickPayController will
+    /// handle the rest of the operation if the subscription is successful.
+    /// </summary>
+    private async Task UpdateSubscription()
+    {
+        // Try to create a new subscription for the authorized user.
+        try
+        {
+            Dictionary<string, string> variables = new Dictionary<string, string>
+        {
+                { "email", email },
+                { "username", name },
+                { "is_update", "true" }
+            };
+
+            Subscription subscription = await QuickPayClient.Subscriptions.Create(QuickPayConfig.GenerateOrderNumber(), "dkk", "Subscription", "Descriptor", variables);
+
+            string subFee = SubscriptionModel.SubscriptionFee.ToString();
+
+            PaymentLinkUrl subscriptionLink = await QuickPayClient.Subscriptions.CreateOrUpdatePaymentLink(subscription.Id, Int32.Parse(subFee), true, "en", "",
+                QuickPayConfig.URL + "/brukari/gjaldingar?u=true", QuickPayConfig.URL + "/brukari/gjaldingar?u=false", QuickPayConfig.CALLBACKURL, true);
+
+            NavigationManager.NavigateTo(subscriptionLink.Url);
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+        }
+    }
+
+    private async Task CancelSubscription()
+    {
+        if (SubscriptionModel.Status != "Cancelled")
+        {
+            try
+            {
+                await QuickPayClient.Subscriptions.Cancel(SubscriptionModel.SubscriptionNumber);
+                await UpdateSubscriptionStatus("Cancelled");
+                await LoadCurrentSubscription();
+
+                cancelled = "true";
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+            }
+        }
+    }
+
+    private async Task ActivateSubscription()
+    {
+        if (SubscriptionModel != null && SubscriptionModel.Status == "Cancelled")
+        {
+            Dictionary<string, string> variables = new Dictionary<string, string>
+            {
+                { "email", email },
+                { "username", name },
+                { "is_activation", "true" }
+            };
+
+            try
+            {
+                Subscription subscription = await QuickPayClient.Subscriptions.Create(QuickPayConfig.GenerateOrderNumber(), "dkk", "Subcription", "Descriptor", variables);
+
+                string subFee = SubscriptionModel.SubscriptionFee.ToString();
+
+                PaymentLinkUrl subscriptionLink = await QuickPayClient.Subscriptions.CreateOrUpdatePaymentLink(subscription.Id, Int32.Parse(subFee), true, "en", "",
+                    QuickPayConfig.URL + "/brukari/gjaldingar?a=true", QuickPayConfig.URL + "/brukari/gjaldingar?a=false", QuickPayConfig.CALLBACKURL, true);
+
+                NavigationManager.NavigateTo(subscriptionLink.Url);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+            }
+        }
+    }
+
+    protected async Task<bool> UpdateSubscriptionStatus(string status)
+    {
+        try
+        {
+            string sql = "update subscriptions set Status = @Status where SubscriptionID = @SubscriptionID";
+
+            await _data.SaveData(sql, new
+            {
+                SubscriptionID = SubscriptionModel.SubscriptionID,
+                Status = status
+            }
+            , _config.GetConnectionString("default"));
+
+            return await Task.FromResult(true);
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+
+            return await Task.FromResult(false);
+        }
+    }
+
+    private void CancelAlert()
+    {
+        cancelled = "false";
+    }
+}

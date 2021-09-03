@@ -1,0 +1,63 @@
+﻿@using DataLibrary
+@using Microsoft.Extensions.Configuration
+
+@inject IDataAccess _data
+@inject IConfiguration _config
+
+<div class="col-xs-12 col-sm-12 col-md-12 col-lg-12 col-xl-4" style="height: 430px;">
+    <div class="card mb-3">
+        <div class="card-header">
+            <i class="fa fa-list"></i> Vørubólkar
+        </div>
+        <div class="category-wrapper" style="height: 354.67px;">
+            <div class="list-group list-group-flush small">
+                @foreach (var category in Categories)
+                {
+                    if (category.ParentCategoryID == null)
+                    {
+                        <a class="list-group-item list-group-item-action" href="#">
+                            <div class="media">
+                                <img class="d-flex mr-3 rounded-circle" src="http://placehold.it/45x45" alt="">
+                                <div class="media-body">
+                                    <h5>@category.Name</h5>
+                                    @if (category.HasSubCategories == true)
+                                    {
+                                        <div class="text-muted">Vís undirbólkar</div>
+                                    }
+                                </div>
+                            </div>
+                        </a>
+                    }
+                }
+                <a class="list-group-item list-group-item-action" href="#">Vís allar...</a>
+            </div>
+        </div>
+        <div class="card-footer small text-muted">Updated yesterday at 11:59 PM</div>
+    </div>
+</div>
+
+@code {
+    List<CategoryModel> Categories;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadCategories();
+    }
+
+    protected async Task<bool> LoadCategories()
+    {
+        try
+        {
+            string sql = "select * from categories";
+            Categories = await _data.LoadData<CategoryModel, dynamic>(sql, new { }, _config.GetConnectionString("default"));
+
+            return await Task.FromResult(true);
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+
+            return await Task.FromResult(false);
+        }
+    }
+}

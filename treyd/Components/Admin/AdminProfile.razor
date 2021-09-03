@@ -1,0 +1,770 @@
+﻿@using DataLibrary
+@using Microsoft.Extensions.Configuration
+@using Microsoft.AspNetCore.WebUtilities;
+@using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
+@using QuickPay.SDK
+
+@inject IDataAccess _data
+@inject IConfiguration _config
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject ProtectedSessionStorage SessionStorage
+@inject NavigationManager NavigationManager
+@inject StateContainer StateContainer
+
+
+<div class="container content clear-fix">
+
+    <h2 class="mt-5 mb-5 text-info text-center">Tín Vangi</h2>
+
+    <div class="row" style="height:100%">
+
+        <div class="col-md-3">
+
+            <div href=# class="d-inline text-center"><center><img src="user.png" width=130px /></center><br /><p class="pl-2 mt-2"><a href="#" class="btn btn-outline-info text-center">Dagfør mynd</a></p><br /></div>
+
+        </div>
+
+        <div class="col-md-9">
+
+            <div class="container">
+                @if (displayUserSuccessAlert == true)
+                {
+                    <div class="alert alert-success alert-dismissible fade show mt-4" role="alert">
+                        Brúkaraupplýsingarnar eru nú dagførdar!
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                }
+                else if (displayUserDangerAlert == true)
+                {
+                    <div class="alert alert-danger alert-dismissible fade show mt-4" role="alert">
+                        Dagføringin miseydnaðist! Royn aftur...
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                }
+                <h3 class="h3 mb-3 fw-normal text-info">Brúkaraupplýsingar</h3>
+                <br />
+                <EditForm Model="@User" OnValidSubmit="ValidateUser">
+                    <DataAnnotationsValidator />
+                    @if (this.role.Equals("Company") || this.role.Equals("Admin"))
+                    {
+                        <div class="form-floating">
+                            <div class="input-2">
+                                <SfTextBox CssClass="e-outline" Placeholder="Navn á fyritøku" FloatLabelType="@FloatLabelType.Auto" @bind-Value="@User.CompanyName" Enabled="false"></SfTextBox>
+                                <ValidationMessage style="color: red;" For="@(() => User.CompanyName)" />
+                                @*<p style="color: red; @companyErrMsg">Fyritøka við givna navninum er longu skrásett á treyd.fo!</p>*@
+                            </div>
+                        </div>
+                        <div class="form-floating" style="margin-top: 10px;">
+                            <div class="input-2">
+                                <SfTextBox CssClass="e-outline" Placeholder="Fornavn ábyrgdarhavarans" FloatLabelType="@FloatLabelType.Auto" @bind-Value="@User.FirstName" Enabled="@uEnabled"></SfTextBox>
+                                <ValidationMessage style="color: red;" For="@(() => User.FirstName)" />
+                            </div>
+                        </div>
+                        <div class="form-floating" style="margin-top: 10px;">
+                            <div class="input-2">
+                                <SfTextBox CssClass="e-outline" Placeholder="Eftirnavn ábyrgdarhavarans" FloatLabelType="@FloatLabelType.Auto" @bind-Value="@User.LastName" Enabled="@uEnabled"></SfTextBox>
+                                <ValidationMessage style="color: red;" For="@(() => User.LastName)" />
+                            </div>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="form-floating">
+                            <div class="input-2">
+                                <SfTextBox CssClass="e-outline" Placeholder="Fornavn" FloatLabelType="@FloatLabelType.Auto" @bind-Value="@User.FirstName" Enabled="@uEnabled"></SfTextBox>
+                                <ValidationMessage style="color: red;" For="@(() => User.FirstName)" />
+                            </div>
+                        </div>
+                        <div class="form-floating" style="margin-top: 10px;">
+                            <div class="input-2">
+                                <SfTextBox CssClass="e-outline" Placeholder="Eftirnavn" FloatLabelType="@FloatLabelType.Auto" @bind-Value="@User.LastName" Enabled="@uEnabled"></SfTextBox>
+                                <ValidationMessage style="color: red;" For="@(() => User.LastName)" />
+                            </div>
+                        </div>
+                    }
+                    <div class="form-floating" style="margin-top: 10px;">
+                        <div class="input-2">
+                            <SfTextBox CssClass="e-outline" Placeholder="Teldupostur" Type="InputType.Email" FloatLabelType="@FloatLabelType.Auto" @bind-Value="@User.Email" Enabled="@uEnabled"></SfTextBox>
+                            <ValidationMessage style="color: red;" For="@(() => User.Email)" />
+                            <p style="color: red; @emailErrMsg">Telduposturin er longu skrásettur á treyd.fo!</p>
+                        </div>
+                    </div>
+
+                    @if (this.editUser == true)
+                    {
+                        <div class="row input-2">
+                            <div class="col-6">
+                                <button class="w-100 btn btn-lg btn-secondary" type="button" @onclick="Reset">
+                                    Angra
+                                </button>
+                            </div>
+                            <div class="col-6">
+                                <button class="w-100 btn btn-lg btn-success" type="submit">
+                                    Goym
+                                </button>
+                            </div>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="row input-2">
+                            <div class="col">
+                                <button class="w-100 btn btn-lg btn-outline-info" type="button" @onclick="EditUser">
+                                    Dagfør
+                                </button>
+                            </div>
+                        </div>
+                    }
+                </EditForm>
+
+                <br />
+                <hr />
+                <br />
+
+                @if (displayAddressSuccessAlert == true)
+                {
+                    <div class="alert alert-success alert-dismissible fade show mt-4" role="alert">
+                        Bústaðurin er nú dagførdur!
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                }
+                else if (displayAddressDangerAlert == true)
+                {
+                    <div class="alert alert-danger alert-dismissible fade show mt-4" role="alert">
+                        Dagføringin miseydnaðist! Royn aftur...
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                }
+                <h3 class="h3 mb-3 fw-normal text-info">Bústaður</h3>
+                <br />
+                <EditForm Model="@Address" OnValidSubmit="ValidateAddress">
+                    <DataAnnotationsValidator />
+                    <div class="form-floating">
+                        <div class="input-2">
+                            <SfTextBox CssClass="e-outline" Placeholder="Bústaður" FloatLabelType="@FloatLabelType.Auto" @bind-Value="@Address.Address" Enabled="@aEnabled"></SfTextBox>
+                            <ValidationMessage style="color: red;" For="@(() => Address.Address)" />
+                        </div>
+                    </div>
+                    <div class="form-floating" style="margin-top: 10px;">
+                        <div class="input-2">
+                            <SfTextBox CssClass="e-outline" Placeholder="Býur/bygd" FloatLabelType="@FloatLabelType.Auto" @bind-Value="@Address.City" Enabled="@aEnabled"></SfTextBox>
+                            <ValidationMessage style="color: red;" For="@(() => Address.City)" />
+                            @*<p style="color: red; @addressErrMsg">Hetta er ikki ein bygd/býur í Føroyum!</p>*@
+                        </div>
+                    </div>
+                    <div class="form-floating" style="margin-top: 10px;">
+                        <div class="input-2">
+                            <SfNumericTextBox TValue="int" CssClass="e-outline" Placeholder="Postnummar" FloatLabelType="@FloatLabelType.Auto" @bind-Value="@Address.PostalCode" Enabled="@aEnabled"></SfNumericTextBox>
+                            <ValidationMessage style="color: red;" For="@(() => Address.PostalCode)" />
+                            @*<p style="color: red; @postalCodeErrMsg">Postnummarið er ikki rætt!</p>*@
+                        </div>
+                    </div>
+
+                    @if (this.editAddress == true)
+                    {
+                        <div class="row input-2">
+                            <div class="col-6">
+                                <button class="w-100 btn btn-lg btn-secondary" type="button" @onclick="Reset">
+                                    Angra
+                                </button>
+                            </div>
+                            <div class="col-6">
+                                <button class="w-100 btn btn-lg btn-success" type="submit">
+                                    Goym
+                                </button>
+                            </div>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="row input-2">
+                            <div class="col">
+                                <button class="w-100 btn btn-lg btn-outline-info" type="button" @onclick="EditAddress">
+                                    Dagfør
+                                </button>
+                            </div>
+                        </div>
+                    }
+                </EditForm>
+
+                <br />
+                <hr />
+                <br />
+
+                @if (displayPasswordSuccessAlert == true)
+                {
+                    <div class="alert alert-success alert-dismissible fade show mt-4" role="alert">
+                        Loyniorðið er nú dagført!
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                }
+                else if (displayPasswordDangerAlert == true)
+                {
+                    <div class="alert alert-danger alert-dismissible fade show mt-4" role="alert">
+                        Dagføringin miseydnaðist! Royn aftur...
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                }
+                <h3 class="h3 mb-3 fw-normal text-info">Dagfør títt loyniorð</h3>
+                <br />
+                @if (this.changePassword == true)
+                {
+                    <EditForm Model="@Password" OnValidSubmit="ValidatePassword">
+                        <DataAnnotationsValidator />
+                        <div class="form-floating" style="margin-top: 10px;">
+                            <div class="input-2">
+                                <SfTextBox CssClass="e-outline" Placeholder="Núverandi loyniorð" Type="InputType.Password" FloatLabelType="@FloatLabelType.Auto" @bind-Value="@Password.CurrentPassword" Enabled="@pEnabled"></SfTextBox>
+                                <p style="color: red; @passwordErrMsg">Loyniorðið samsvarar ikki!</p>
+                            </div>
+                        </div>
+                        <div class="form-floating" style="margin-top: 10px;">
+                            <div class="input-2">
+                                <SfTextBox CssClass="e-outline" Placeholder="Nýtt loyniorð" Type="InputType.Password" FloatLabelType="@FloatLabelType.Auto" @bind-Value="@Password.NewPassword" Enabled="@pEnabled"></SfTextBox>
+                                <ValidationMessage style="color: red;" For="@(() => Password.NewPassword)" />
+                            </div>
+                        </div>
+                        <div class="form-floating" style="margin-top: 10px;">
+                            <div class="input-2">
+                                <SfTextBox CssClass="e-outline" Placeholder="Vátta nýggja loyniorðið" Type="InputType.Password" FloatLabelType="@FloatLabelType.Auto" @bind-Value="@Password.ConfirmPassword" Enabled="@pEnabled"></SfTextBox>
+                                <ValidationMessage style="color: red;" For="@(() => Password.ConfirmPassword)" />
+                            </div>
+                        </div>
+
+                        <div class="row input-2">
+                            <div class="col-6">
+                                <button class="w-100 btn btn-lg btn-secondary" type="button" @onclick="Reset">
+                                    Angra
+                                </button>
+                            </div>
+                            <div class="col-6">
+                                <button class="w-100 btn btn-lg btn-success" type="submit">
+                                    Goym
+                                </button>
+                            </div>
+                        </div>
+                    </EditForm>
+                }
+                else
+                {
+                    <div class="row input-2">
+                        <div class="col">
+                            <button class="w-100 btn btn-lg btn-outline-info" type="button" @onclick="ChangePassword">
+                                Dagfør loyniorðið
+                            </button>
+                        </div>
+                    </div>
+                }
+
+                <br />
+                <hr />
+                <br />
+
+                <h3 class="h3 mb-3 fw-normal text-info">Strika teg sum brúkara á Treyd</h3>
+                <br />
+                <div class="row mb-5">
+                    <div class="col">
+                        <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#exampleModal">
+                            Strika brúkara
+                        </button>
+                    </div>
+                </div>
+
+                <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="exampleModalLabel">Strika brúkara</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                Er tað vist, at tú vilt strika teg sum brúkara á <strong>Treyd</strong>?
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" @onclick="Reset">Angra</button>
+                                <button type="button" class="btn btn-danger" data-bs-dismiss="modal" @onclick="DeleteUser">Strika</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+@code {
+    private QuickPayClient QuickPayClient = new QuickPayClient(QuickPayConfig.API_KEY, QuickPayConfig.PRIVATE_KEY, QuickPayConfig.USER);
+
+    private UserModel User { get; set; } = new UserModel();
+    private AddressModel Address { get; set; } = new AddressModel();
+    private PasswordModel Password { get; set; } = new PasswordModel();
+    private SubscriptionModel SubscriptionModel { get; set; }
+
+    private List<UserModel> Users;
+
+    private string emailErrMsg = "display: none;";
+    //private string companyErrMsg = "display: none;";
+    private string passwordErrMsg = "display: none;";
+
+    private string name = "";
+    private string role = "";
+    private string email = "";
+
+    private bool uEnabled = false;
+    private bool aEnabled = false;
+    private bool pEnabled = false;
+
+    private bool editUser = false;
+    private bool editAddress = false;
+    private bool changePassword = false;
+
+    private bool displayUserSuccessAlert = false;
+    private bool displayUserDangerAlert = false;
+    private bool displayAddressSuccessAlert = false;
+    private bool displayAddressDangerAlert = false;
+    private bool displayPasswordSuccessAlert = false;
+    private bool displayPasswordDangerAlert = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (await ((TreydAuthenticationStateProvider)AuthenticationStateProvider).GetAuthenticationStateAsync() is not null)
+        {
+            var auth = await SessionStorage.GetAsync<string>("user");
+
+            if (auth.Value != null)
+            {
+                var data = auth.Value.Split(" ");
+                var strArr = data.Take(data.Length - 2);
+                this.name = string.Join(" ", strArr);
+                this.role = data[data.Length - 2];
+                this.email = data[data.Length - 1];
+            }
+        }
+
+        await LoadUser();
+        await LoadAddress();
+    }
+
+    protected async Task Reset()
+    {
+        this.uEnabled = false;
+        this.aEnabled = false;
+        this.pEnabled = false;
+
+        this.editUser = false;
+        this.editAddress = false;
+        this.changePassword = false;
+
+        this.emailErrMsg = "display: none;";
+        //this.companyErrMsg = "display: none;";
+        this.passwordErrMsg = "display: none;";
+    }
+
+    public void EditUser()
+    {
+        this.editUser = true;
+        this.editAddress = false;
+        this.changePassword = false;
+
+        this.uEnabled = true;
+        this.aEnabled = false;
+        this.pEnabled = false;
+
+        this.displayUserSuccessAlert = false;
+        this.displayUserDangerAlert = false;
+        this.displayAddressSuccessAlert = false;
+        this.displayAddressDangerAlert = false;
+        this.displayPasswordSuccessAlert = false;
+        this.displayPasswordDangerAlert = false;
+
+        this.emailErrMsg = "display: none;";
+        //this.companyErrMsg = "display: none;";
+        this.passwordErrMsg = "display: none;";
+    }
+
+    public void EditAddress()
+    {
+        this.editAddress = true;
+        this.editUser = false;
+        this.changePassword = false;
+
+        this.aEnabled = true;
+        this.uEnabled = false;
+        this.pEnabled = false;
+
+        this.displayUserSuccessAlert = false;
+        this.displayUserDangerAlert = false;
+        this.displayAddressSuccessAlert = false;
+        this.displayAddressDangerAlert = false;
+        this.displayPasswordSuccessAlert = false;
+        this.displayPasswordDangerAlert = false;
+
+        this.emailErrMsg = "display: none;";
+        //this.companyErrMsg = "display: none;";
+        this.passwordErrMsg = "display: none;";
+    }
+
+    public void ChangePassword()
+    {
+        this.changePassword = true;
+        this.editUser = false;
+        this.editAddress = false;
+
+        this.pEnabled = true;
+        this.uEnabled = false;
+        this.aEnabled = false;
+
+        this.displayUserSuccessAlert = false;
+        this.displayUserDangerAlert = false;
+        this.displayAddressSuccessAlert = false;
+        this.displayAddressDangerAlert = false;
+        this.displayPasswordSuccessAlert = false;
+        this.displayPasswordDangerAlert = false;
+
+        this.emailErrMsg = "display: none;";
+        //this.companyErrMsg = "display: none;";
+        this.passwordErrMsg = "display: none;";
+    }
+
+    protected async Task<bool> LoadUser()
+    {
+        try
+        {
+            string sql = "select * from users where Email = @Email";
+            User = await _data.QuerySingle<UserModel, dynamic>(sql, new { Email = this.email }, _config.GetConnectionString("default"));
+
+            User.ConfirmPassword = User.Password;
+
+            return await Task.FromResult(true);
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+
+            return await Task.FromResult(false);
+        }
+    }
+
+    protected async Task<bool> LoadAddress()
+    {
+        try
+        {
+            string sql = "select * from addresses where UserID = @UserID";
+            Address = await _data.QuerySingle<AddressModel, dynamic>(sql, new { UserID = User.UserID }, _config.GetConnectionString("default"));
+
+            Address.User = User;
+
+            return await Task.FromResult(true);
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+
+            return await Task.FromResult(false);
+        }
+    }
+
+    protected async Task<bool> LoadUsers()
+    {
+        try
+        {
+            string sql = "select * from users";
+            Users = await _data.LoadData<UserModel, dynamic>(sql, new { }, _config.GetConnectionString("default"));
+
+            return await Task.FromResult(true);
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+
+            return await Task.FromResult(false);
+        }
+    }
+
+    protected async Task<bool> LoadCurrentSubscription()
+    {
+        try
+        {
+            string sql = "select * from subscriptions join users on subscriptions.UserID = users.UserID where Email = @Email";
+            SubscriptionModel = await _data.QuerySingle<SubscriptionModel, dynamic>(sql, new { Email = this.email }, _config.GetConnectionString("default"));
+
+            return await Task.FromResult(true);
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+
+            return await Task.FromResult(false);
+        }
+    }
+
+    private async Task<bool> ValidateUser()
+    {
+        await LoadUsers();
+
+        if (Users != null && Users.Count > 0 && User != null)
+        {
+            if (Users.Exists(x => !(x.Email.Equals(User.Email)) || x.Email.Equals(User.Email) && x.UserID.Equals(User.UserID)))
+            {
+                if (User.Role.Equals("Company") || User.Role.Equals("Admin"))
+                {
+                    await UpdateCompany();
+                }
+                else
+                {
+                    await UpdateCustomer();
+                }
+
+                await Reset();
+
+                displayUserDangerAlert = false;
+                displayUserSuccessAlert = true;
+
+                return await Task.FromResult(true);
+            }
+            else
+            {
+                this.emailErrMsg = "display: initial;";
+
+                return await Task.FromResult(false);
+            }
+        }
+        else
+        {
+            displayUserSuccessAlert = false;
+            displayUserDangerAlert = true;
+
+            return await Task.FromResult(false);
+        }
+    }
+
+    private async Task<bool> ValidateAddress()
+    {
+        if (Address != null)
+        {
+            await UpdateAddress();
+            await Reset();
+
+            this.displayAddressDangerAlert = false;
+            this.displayAddressSuccessAlert = true;
+
+            return await Task.FromResult(true);
+        }
+
+        this.displayAddressSuccessAlert = false;
+        this.displayAddressDangerAlert = true;
+
+        return await Task.FromResult(false);
+    }
+
+    private async Task<bool> ValidatePassword()
+    {
+        if (User != null)
+        {
+            byte[] salt = Convert.FromBase64String(User.PasswordSalt);
+
+            string passwordHash = ((TreydAuthenticationStateProvider)AuthenticationStateProvider).HashPassword(Password.CurrentPassword, salt);
+
+            if (User.Password == passwordHash)
+            {
+                await UpdatePassword();
+                await Reset();
+
+                this.passwordErrMsg = "display: none;";
+                this.displayPasswordDangerAlert = false;
+                this.displayPasswordSuccessAlert = true;
+
+                return await Task.FromResult(true);
+            }
+            else
+            {
+                this.passwordErrMsg = "display: initial;";
+
+                return await Task.FromResult(false);
+            }
+        }
+        else
+        {
+            this.displayPasswordSuccessAlert = false;
+            this.displayPasswordDangerAlert = true;
+
+            return await Task.FromResult(false);
+        }
+    }
+
+    private async Task<bool> UpdateCustomer()
+    {
+        try
+        {
+            string sql = "update users set FirstName = @FirstName, LastName = @LastName, " +
+                    "Email = @Email, Updated = @Updated where UserID = @UserID";
+
+            await _data.SaveData(sql, new
+            {
+                UserID = User.UserID,
+                FirstName = User.FirstName,
+                LastName = User.LastName,
+                Email = User.Email,
+                Updated = DateTime.Now
+            }, _config.GetConnectionString("default"));
+
+            string name = User.FirstName + " " + User.LastName;
+
+            ((ITreydAuthenticationStateProvider)AuthenticationStateProvider).SetAuthenticationState(name, User.Role, User.Email);
+
+            string userAuth = name + " " + User.Role + " " + User.Email;
+
+            await SessionStorage.SetAsync("user", userAuth);
+
+            return await Task.FromResult(true);
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+
+            return await Task.FromResult(false);
+        }
+    }
+
+    private async Task<bool> UpdateCompany()
+    {
+        try
+        {
+            string sql = "update users set FirstName = @FirstName, LastName = @LastName, " +
+                    "Email = @Email, Updated = @Updated where UserID = @UserID";
+
+            await _data.SaveData(sql, new
+            {
+                UserID = User.UserID,
+                FirstName = User.FirstName,
+                LastName = User.LastName,
+                Email = User.Email,
+                Updated = DateTime.Now
+            }, _config.GetConnectionString("default"));
+
+            ((ITreydAuthenticationStateProvider)AuthenticationStateProvider).SetAuthenticationState(User.CompanyName, User.Role, User.Email);
+
+            string userAuth = User.CompanyName + " " + User.Role + " " + User.Email;
+
+            await SessionStorage.SetAsync("user", userAuth);
+
+            return await Task.FromResult(true);
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+
+            return await Task.FromResult(false);
+        }
+    }
+
+    private async Task<bool> UpdateAddress()
+    {
+        try
+        {
+            string sql = "update addresses set Address = @Address, City = @City, PostalCode = @PostalCode, " +
+                    "Updated = @Updated, where AddressID = @AddressID";
+
+            await _data.SaveData(sql, new
+            {
+                AddressID = Address.AddressID,
+                Address = Address.Address,
+                City = Address.City,
+                PostalCode = Address.PostalCode,
+                Updated = DateTime.Now
+            }
+            , _config.GetConnectionString("default"));
+
+            return await Task.FromResult(true);
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+
+            return await Task.FromResult(false);
+        }
+    }
+
+    private async Task<bool> UpdatePassword()
+    {
+        try
+        {
+            byte[] salt = ((ITreydAuthenticationStateProvider)AuthenticationStateProvider).GetSalt();
+
+            string passwordHash = ((ITreydAuthenticationStateProvider)AuthenticationStateProvider).HashPassword(Password.NewPassword, salt);
+
+            string passwordSalt = Convert.ToBase64String(salt);
+
+            string sql = "update users set Password = @Password, PasswordSalt = @PasswordSalt, Updated = @Updated where UserID = @UserID";
+
+            await _data.SaveData(sql, new
+            {
+                UserID = User.UserID,
+                Password = passwordHash,
+                PasswordSalt = passwordSalt,
+                Updated = DateTime.Now
+            }, _config.GetConnectionString("default"));
+
+            ((ITreydAuthenticationStateProvider)AuthenticationStateProvider).SetAuthenticationState(User.CompanyName, User.Role, User.Email);
+
+            string userAuth = User.CompanyName + " " + User.Role + " " + User.Email;
+
+            await SessionStorage.SetAsync("user", userAuth);
+
+            return await Task.FromResult(true);
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+
+            return await Task.FromResult(false);
+        }
+    }
+
+    private async Task CancelSubscription()
+    {
+        if (SubscriptionModel.Status != "Cancelled")
+        {
+            try
+            {
+                await QuickPayClient.Subscriptions.Cancel(SubscriptionModel.SubscriptionNumber);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+            }
+        }
+    }
+
+    protected async Task<bool> DeleteUser()
+    {
+        try
+        {
+            await CancelSubscription();
+
+            string sql = "delete from users where Email = @Email";
+
+            await _data.SaveData(sql, new { Email = User.Email }, _config.GetConnectionString("default"));
+
+            StateContainer.SetIsLoggedIn(false);
+            StateContainer.SetIsRegistered(false);
+            StateContainer.SetIsLoggedOut(false);
+            StateContainer.SetIsDeleted(true);
+
+            NavigationManager.NavigateTo("/");
+
+            ((TreydAuthenticationStateProvider)AuthenticationStateProvider).UnsetAuthenticationState();
+
+            return await Task.FromResult(true);
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+
+            return await Task.FromResult(false);
+        }
+    }
+} 

@@ -1,0 +1,76 @@
+﻿@page "/"
+
+@inject NavigationManager NavManager
+@inject AuthenticationStateProvider AuthenticationStateProvider
+
+<AuthorizeView>
+    <Authorized>
+        @if (context.User.IsInRole("Customer"))
+        {
+            <div class="container">
+                <LoginAlert Name="@context.User.Identity.Name" />
+                <RegisterAlert Name="@context.User.Identity.Name" Role="@Role" />
+            </div>
+        }
+    </Authorized>
+    <NotAuthorized>
+        <div class="container">
+            <LogoutAlert />
+        </div>
+    </NotAuthorized>
+</AuthorizeView>
+
+<!-- Slider and Quick Search Area START -->
+<div class="pb-lg-3 pb-xl-3 align-items-center treyd-main-bg-color">
+    <div class="row">
+        <div class="col-xs-12 col-sm-12 col-md-12 col-lg-8 col-xl-8">
+            <Carousel />
+        </div>
+        <div class="col-xs-12 col-sm-12 col-md-12 col-lg-4 col-xl-4">
+            <div class="p-lg-5 p-xl-5 w-75">
+                <QuickSearch />
+            </div>
+        </div>
+    </div>
+
+    <div class="pb-5 text-center">
+        <div class="text-light">
+            Vitja sølumiðstøðina
+        </div>
+        <a class="btn btn-lg btn-info mt-4" href="/soelumidstoedin">Sølumiðstøðin</a>
+    </div>
+
+    <!-- Slider and Quick Search Area END -->
+    <!-- VÆL UMTÓKTAR START -->
+    <div>
+        Væl umtóktar vørur hesa vikuna
+    </div>
+    <!-- VÆL UMTÓKTAR END -->
+    <!-- VITJAÐIR HANDLAR START -->
+    <div>
+        Mest vitjaðu handlar hesa vikuna
+    </div>
+    <!-- VITJAÐIR HANDLAR END -->
+</div>
+
+@code {
+    string Role = "kundi";
+
+    bool isShown = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await ((TreydAuthenticationStateProvider)AuthenticationStateProvider).GetAuthenticationStateAsync();
+    }
+
+    private void OnButtonClick()
+    {
+        isShown = !isShown;
+    }
+}
+
+<style>
+    .treyd-main-bg-color {
+        background-color: #6C757E;
+    }
+</style>

@@ -1,0 +1,25 @@
+﻿@if (contentLoaded)
+{
+    @ChildContent
+}
+else
+{
+    <div style="position:absolute; top:20vh; width:100%; text-align:center">
+        <img src="Asset2.svg" width="600" />
+        <p class="text-info" style="margin-top: -70px;">LESUR INN...</p>
+    </div>
+}
+
+@code {
+
+    bool contentLoaded;
+
+    [Parameter]
+    public RenderFragment ChildContent { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Task.Delay(500);
+        contentLoaded = true;
+    }
+}

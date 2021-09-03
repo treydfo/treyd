@@ -1,0 +1,12 @@
+﻿@page "/um_treyd"
+
+@inject AuthenticationStateProvider AuthenticationStateProvider
+
+<h3>Um Treyd</h3>
+
+@code {
+    protected override async Task OnInitializedAsync()
+    {
+        await ((TreydAuthenticationStateProvider)AuthenticationStateProvider).GetAuthenticationStateAsync();
+    }
+}

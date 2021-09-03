@@ -1,0 +1,136 @@
+﻿@page "/brukari/styripultur"
+
+@inject AuthenticationStateProvider AuthenticationStateProvider
+
+<AuthorizeView>
+    <Authorized>
+        <div class="container">
+            @if (context.User.IsInRole("Company"))
+            {
+                <div class="content-wrapper">
+                    <div class="container-fluid">
+                        <div class="row">
+                            <div class="container">
+                                <LoginAlert Name="@context.User.Identity.Name" />
+                                <RegisterAlert Name="@context.User.Identity.Name" Role="@companyRole" />
+                            </div>
+                            <nav class="mt-4">
+                                <div class="nav nav-tabs flex-sm-row" id="progressbar" role="tablist">
+                                    <a class="flex-sm-fill text-center bg-info text-decoration-none text-white btn-lg nav-link active" id="nav-styripultur-tab" data-bs-toggle="tab" type="button" role="tab" aria-controls="nav-styripultur" aria-selected="true" href="/brukari/styripultur">
+                                        Stýripultur
+                                    </a>
+                                    <a class="flex-sm-fill text-center text-info text-decoration-none btn-lg nav-link" type="button" href="/brukari/handil">
+                                        Handil
+                                    </a>
+                                    <a class="flex-sm-fill text-center text-info text-decoration-none btn-lg nav-link" type="button" href="/brukari/voeruumsiting">
+                                        Vøruumsiting
+                                    </a>
+                                    <a class="flex-sm-fill text-center text-info text-decoration-none btn-lg nav-link" type="button" href="/brukari/bileggingar">
+                                        Bíleggingar
+                                    </a>
+                                    <a class="flex-sm-fill text-center text-info text-decoration-none btn-lg nav-link" type="button" href="/brukari/gjaldingar">
+                                        Gjaldingar
+                                    </a>
+                                    <a class="flex-sm-fill text-center text-info text-decoration-none btn-lg nav-link" type="button" href="/brukari/aetlan">
+                                        Ætlan
+                                    </a>
+                                    <a class="flex-sm-fill text-center text-info text-decoration-none btn-lg nav-link" type="button" href="/brukari/hagtoel">
+                                        Hagtøl
+                                    </a>
+                                </div>
+                            </nav>
+                            <div class="tab-content" id="nav-tabContent">
+                                <div class="tab-pane fade show active" id="nav-styripultur" role="tabpanel" aria-labelledby="nav-styripultur-tab">
+                                    <div class="flex-wrapper row wow fadeIn pt-4">
+                                        <div class="prod">
+                                            <AdminDashboard />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+            else if (context.User.IsInRole("Admin"))
+            {
+                <div class="content-wrapper">
+                    <div class="container-fluid">
+                        <div class="row">
+                            <div class="container">
+                                <LoginAlert Name="@context.User.Identity.Name" />
+                                <RegisterAlert Name="@context.User.Identity.Name" Role="@adminRole" />
+                            </div>
+                            <nav class="mt-4">
+                                <div class="nav nav-tabs flex-sm-row" id="progressbar" role="tablist">
+                                    <a class="flex-sm-fill text-center bg-info text-decoration-none text-white btn-lg nav-link active" id="nav-styripultur-tab" data-bs-toggle="tab" type="button" role="tab" aria-controls="nav-styripultur" aria-selected="true" href="/brukari/styripultur">
+                                        Stýripultur
+                                    </a>
+                                    <a class="flex-sm-fill text-center text-info text-decoration-none btn-lg nav-link" type="button" href="/brukari/handil">
+                                        Handil
+                                    </a>
+                                    <a class="flex-sm-fill text-center text-info text-decoration-none btn-lg nav-link" type="button" href="/brukari/voeruumsiting">
+                                        Vøruumsiting
+                                    </a>
+                                    <a class="flex-sm-fill text-center text-info text-decoration-none btn-lg nav-link" type="button" href="/brukari/brukarar">
+                                        Brúkarar
+                                    </a>
+                                    <a class="flex-sm-fill text-center text-info text-decoration-none btn-lg nav-link" type="button" href="/brukari/bileggingar">
+                                        Bíleggingar
+                                    </a>
+                                    <a class="flex-sm-fill text-center text-info text-decoration-none btn-lg nav-link" type="button" href="/brukari/gjaldingar">
+                                        Gjaldingar
+                                    </a>
+                                    <a class="flex-sm-fill text-center text-info text-decoration-none btn-lg nav-link" type="button" href="/brukari/aetlan">
+                                        Ætlan
+                                    </a>
+                                    <a class="flex-sm-fill text-center text-info text-decoration-none btn-lg nav-link" type="button" href="/brukari/hagtoel">
+                                        Hagtøl
+                                    </a>
+                                </div>
+                            </nav>
+                            <div class="tab-content" id="nav-tabContent">
+                                <div class="tab-pane fade show active" id="nav-styripultur" role="tabpanel" aria-labelledby="nav-styripultur-tab">
+                                    <div class="prod">
+                                        <AdminDashboard />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <IndexRedirect />
+            }
+        </div>
+    </Authorized>
+    <NotAuthorized>
+        <IndexRedirect />
+    </NotAuthorized>
+</AuthorizeView>
+
+@code {
+    string adminRole = "administrator";
+    string companyRole = "fyritøka";
+
+    string cssClass = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await ((TreydAuthenticationStateProvider)AuthenticationStateProvider).GetAuthenticationStateAsync();
+    }
+
+    public void ToggleIsClosed()
+    {
+        if (this.cssClass == "")
+        {
+            this.cssClass = "is-closed";
+        }
+        else
+        {
+            this.cssClass = "";
+        }
+    }
+}

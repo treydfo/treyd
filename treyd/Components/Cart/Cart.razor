@@ -1,0 +1,52 @@
+﻿@inject StateContainer StateContainer
+@implements IDisposable
+
+<ul class="list-group mb-3">
+    <li class="row col-12 align-items-center text-info" style="font-size: 24px; padding: 0 16px;">
+        <div class="col-2">
+            VØRA
+        </div>
+        <div class="col-4">
+            VØRULÝSING
+        </div>
+        <div class="col-2 text-center">
+            EINDIR
+        </div>
+        <div class="col-2 text-center">
+            PRÍSUR
+        </div>
+        <div class="col-2 text-center">
+            STRIKA VØRU
+        </div>
+    </li>
+    <hr />
+    <CartItem DropdownItem="false" />
+    @*<li class="list-group-item d-flex justify-content-between bg-light">
+            <div class="text-success">
+                <h6 class="my-0">Promo code</h6>
+                <small>EXAMPLECODE</small>
+            </div>
+            <span class="text-success">−$5</span>
+        </li>*@
+    <hr />
+    <li class="list-group-item d-flex justify-content-between text-info" style="font-size: 26px;">
+        <span>Í alt</span>
+        <span>@CartStateProvider.GetCartItemTotal().ToString("N0") KR</span>
+    </li>
+</ul>
+
+@code {
+    [CascadingParameter]
+    CartStateProvider CartStateProvider { get; set; }
+
+    protected override void OnInitialized()
+    {
+        CartStateProvider.OnChange += StateHasChanged;
+    }
+
+
+    public void Dispose()
+    {
+        CartStateProvider.OnChange -= StateHasChanged;
+    }
+}
