@@ -1,0 +1,179 @@
+﻿@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject StateContainer StateContainer
+@inject NavigationManager NavigationManager
+
+<div class="container-fluid w-100 align-items-center" style="height: 32px;">
+    <div class="row bg-info text-white pt-1 pb-1" style="font-size: 16px;">
+        <div class="col-7 align-items-center">
+            <i class="fas fa-phone-alt"></i> +298 254094&nbsp;&nbsp;&nbsp;<i class="fas fa-envelope"></i> treyd@treyd.fo
+        </div>
+        <div class="col-5 align-items-center" style="text-align: right;">
+            <i class="fab fa-linkedin"></i>&nbsp;<i class="fab fa-facebook"></i>&nbsp;<i class="fab fa-twitter"></i>&nbsp;<i class="fab fa-instagram"></i>
+        </div>
+    </div>
+</div>
+<header class="header sticky-top" style="z-index: 1040;">
+    <nav class="navbar navbar-expand-lg navbar-custom">
+        <div class="container-fluid" style="height: 100%; padding: 0;">
+            <a class="navbar-brand main-brand" href="/">
+                <img src="Asset14.png" width="80" height="40">
+            </a>
+            <ul class="list-unstyled w-100 nav-ul align-items-center">
+                <li class="nav-item nav-link justify-content-start">
+                    <a class="navbar-brand" href="/" style="display: flex; justify-content: center; align-items: center;">
+                        <img src="Asset14.png" width="80" height="40">
+                    </a>
+                </li>
+                <li class="nav-item mr-auto w-100 justify-content-center search-form-hidden">
+                    <div class="justify-content-center">
+                        <form class="d-flex">
+                            <input class="form-control me-2" type="search" placeholder="Leita eftir einumhvørjum" aria-label="Search" style="border-radius: 10rem; border-color: #0e3976; color: #0e3976;">
+                        </form>
+                    </div>
+                </li>
+                &nbsp;&nbsp;&nbsp;
+                <CartDropdown />
+                <li class="nav-item nav-link justify-content-end p-0">
+                    <button class="navbar-toggler navbar-toggler-right" type="button" data-bs-toggle="collapse" data-bs-target="#navbarScroll" aria-controls="navbarScroll" aria-expanded="false" aria-label="Toggle navigation">
+                        <span class="navbar-toggler-icon"><i class="fas fa-bars" style="padding-top: 7px"></i></span>
+                    </button>
+                </li>
+            </ul>
+            <div class="collapse navbar-collapse navbar-default" id="navbarScroll">
+                &nbsp;
+                &nbsp;
+                <div class="justify-content-center search-form">
+                    <form class="d-flex">
+                        <input class="form-control me-2" type="search" placeholder="Leita eftir einumhvørjum" aria-label="Search" style="border-radius: 10rem; border-color: #0e3976; color: #0e3976;">
+                    </form>
+                </div>
+                <ul class="navbar-nav mr-auto w-100 justify-content-end align-items-center">
+                    <li class="nav-item">
+                        <NavLink class="nav-link" href="/" Match="NavLinkMatch.All">
+                            &nbsp;&nbsp;Heim&nbsp;&nbsp;
+                        </NavLink>
+                    </li>
+                    <li class="nav-item">
+                        <NavLink class="nav-link" href="/soelumidstoedin" Match="NavLinkMatch.All">
+                            &nbsp;&nbsp;Sølumiðstøðin&nbsp;&nbsp;
+                        </NavLink>
+                    </li>
+                    @*<li class="nav-item">
+                        <NavLink class="nav-link um" href="/um_treyd" Match="NavLinkMatch.All">
+                            &nbsp;&nbsp;Um Treyd&nbsp;&nbsp;
+                        </NavLink>
+                    </li>
+                    <li class="nav-item">
+                        <NavLink class="nav-link samband" href="/samband" Match="NavLinkMatch.All">
+                            &nbsp;&nbsp;Samband&nbsp;&nbsp;
+                        </NavLink>
+                    </li>*@
+                    <AuthorizeView>
+                        <Authorized>
+                            <li class="nav-item dropdown">
+                                <NavLink NavLink class="nav-item nav-link" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false" Match="NavLinkMatch.All" style="padding: 0 20px 0 20px; margin: auto 0;">
+                                    <button class="btn btn-outline-info" type="button" style="border-radius: 10rem;"><i class="fas fa-user fa-lg"></i> @context.User.Identity.Name</button>
+                                </NavLink>
+                                <ul class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarDropdown">
+                                    @if (context.User.IsInRole("Company") || context.User.IsInRole("Admin"))
+                                    {
+                                        <li class="nav-item">
+                                            <NavLink class="nav-link" href="/brukari/styripultur" Match="NavLinkMatch.All">
+                                                <i class="fas fa-th-list"></i> Umsiting
+                                            </NavLink>
+                                        </li>
+                                    }
+                                    <li class="nav-item">
+                                        <NavLink class="nav-link" href="/brukari/vangi" Match="NavLinkMatch.All">
+                                            <i class="fas fa-address-card"></i> Vangi
+                                        </NavLink>
+                                    </li>
+                                    <li class="nav-item">
+                                        <NavLink class="nav-link" href="/brukari/ynskilisti" Match="NavLinkMatch.All">
+                                            <i class="far fa-heart"></i> Ynskilisti
+                                        </NavLink>
+                                    </li>
+                                    <li class="nav-item">
+                                        <NavLink class="nav-link" href="/brukari/bileggingar" Match="NavLinkMatch.All">
+                                            <i class="fas fa-shopping-bag"></i> Bíleggingar
+                                        </NavLink>
+                                    </li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li class="nav-item">
+                                        <NavLink class="nav-link" href="/brukari/hjalp" Match="NavLinkMatch.All">
+                                            <i class="fas fa-question"></i> Hjálp
+                                        </NavLink>
+                                    </li>
+                                    <li class="nav-item">
+                                        <NavLink class="nav-link" href="/brukari/stillingar" Match="NavLinkMatch.All">
+                                            <i class="fas fa-cog"></i> Stillingar
+                                        </NavLink>
+                                    </li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li class="nav-item">
+                                        <NavLink class="nav-link" role="button" @onclick="LogOut">
+                                            <i class="fas fa-sign-out-alt"></i> Rita út
+                                        </NavLink>
+                                    </li>
+                                </ul>
+                            </li>
+                        </Authorized>
+                        <NotAuthorized>
+                            <li class="nav-item">
+                                <NavLink class="nav-link rita-inn" href="/rita_inn" Match="NavLinkMatch.All">
+                                    &nbsp;&nbsp;<i class="fas fa-sign-in-alt"></i> Rita inn&nbsp;&nbsp;
+                                </NavLink>
+                            </li>
+                            <li class="nav-item">
+                                <NavLink class="nav-link stovna-brukara" href="/stovna_brukara" style="padding: 0 20px 0 20px; margin: auto 0;" Match="NavLinkMatch.All">
+                                    <button class="btn btn-outline-info" type="button" style="border-radius: 10rem;"><i class="fas fa-user-plus"></i> Stovna brúkara</button>
+                                </NavLink>
+                            </li>
+                            <li class="nav-item dropdown dropdown-hidden">
+                                <NavLink class="nav-link" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false" Match="NavLinkMatch.All">
+                                    &nbsp;&nbsp;<i class="fas fa-user fa-lg"></i>&nbsp;&nbsp;
+                                </NavLink>
+                                <ul class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarDropdown">
+                                    <li class="nav-item">
+                                        <NavLink class="nav-link" href="/rita_inn" Match="NavLinkMatch.All">
+                                            <i class="fas fa-sign-in-alt"></i> Rita inn
+                                        </NavLink>
+                                    </li>
+                                    <li class="nav-item">
+                                        <NavLink class="nav-link" href="/stovna_brukara" style="padding: 0 20px 0 20px; margin: auto 0;" Match="NavLinkMatch.All">
+                                            <button class="btn btn-outline-info" type="button" style="border-radius: 10rem;"><i class="fas fa-user-plus"></i> Stovna brúkara</button>
+                                        </NavLink>
+                                    </li>
+                                </ul>
+                            </li>
+                        </NotAuthorized>
+                    </AuthorizeView>
+                    <li class="cart-component-ul">
+                        <CartDropdown />
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+</header>
+
+@code {
+    [CascadingParameter]
+    public CartStateProvider CartStateProvider { get; set; }
+
+    protected override void OnInitialized()
+    {
+        CartStateProvider.OnChange += StateHasChanged;
+    }
+
+    public void LogOut()
+    {
+        StateContainer.SetIsLoggedIn(false);
+        StateContainer.SetIsRegistered(false);
+        StateContainer.SetIsLoggedOut(true);
+
+        NavigationManager.NavigateTo("/");
+
+        ((TreydAuthenticationStateProvider)AuthenticationStateProvider).UnsetAuthenticationState();
+    }
+}

@@ -1,0 +1,267 @@
+﻿@page "/brukari/kassi"
+
+@using DataLibrary
+@using Microsoft.Extensions.Configuration
+@using QuickPay.SDK;
+
+@inject IDataAccess _data
+@inject IConfiguration _config
+@inject StateContainer StateContainer
+@inject NavigationManager NavigationManager
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject ProtectedSessionStorage SessionStorage
+
+<AuthorizeView>
+    <NotAuthorized>
+        <LoginRedirect />
+    </NotAuthorized>
+</AuthorizeView>
+
+<div class="container mb-5">
+    <div class="py-5 text-center" style="padding-top: 0 !important;">
+        <h1 class="text-info mt-4">Kassi</h1>
+    </div>
+
+    <div class="row g-5">
+        <div class="col-12">
+            <div class="row">
+                <ul id="progressbar" class="text-center">
+                    <li class="@cartActive"></li>
+                    <li class="@paymentActive"></li>
+                    <li class="@recieptActive"></li>
+                </ul>
+            </div>
+            <div class="row">
+                <ul class="progress-text text-center">
+                    <li>Kurv</li>
+                    <li>Gjalding</li>
+                    <li>Kvittan</li>
+                </ul>
+            </div>
+            <nav style="display: none;">
+                <div class="nav nav-tabs flex-sm-row" id="progressbar" role="tablist">
+                    <button class="flex-sm-fill btn-lg nav-link @cartBtnActive" id="nav-cart-tab" data-bs-toggle="tab" type="button" role="tab" aria-controls="nav-cart" aria-selected="true" @onclick="CartSection">
+                        @*Tín kurv <i class="fas fa-check-circle" style="@cartSuccess"></i>*@
+                    </button>
+                    <button class="flex-sm-fill btn-lg nav-link @paymentBtnActive" id="nav-payment-tab" data-bs-toggle="tab" type="button" role="tab" aria-controls="nav-payment" aria-selected="false" @onclick="PaymentSection">
+                        @*Gjalding <i class="fas fa-check-circle" style="@paymentSuccess"></i><i class="fas fa-exclamation-circle" style="@paymentDanger"></i>*@
+                    </button>
+                    <button class="flex-sm-fill btn-lg nav-link @recieptBtnActive" id="nav-reciept-tab" data-bs-toggle="tab" type="button" role="tab" aria-controls="nav-reciept" aria-selected="false" @onclick="ReceiptSection">
+                        @*Kvittan <i class="fas fa-check-circle" style="@recieptSuccess"></i><i class="fas fa-exclamation-circle" style="@recieptDanger"></i>*@
+                    </button>
+                </div>
+            </nav>
+            <div class="alert alert-warning alert-dismissible fade show mt-4" role="alert">
+                <h5 class="text-danger text-center">Test kort: 1000 0000 0000 0008 | 01/22 | CVV: 234</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            <div class="tab-content" id="nav-tabContent">
+                @if (this.cartBtnActive == "active")
+                {
+                    <div class="d-flex justify-content-between align-items-center pb-4 pt-4" style="font-size: 30px;">
+                        <span class="text-info">Tín kurv</span>
+                        <span class="badge bg-success rounded-pill">@CartStateProvider.GetCartItemCount()</span>
+                    </div>
+                    <div class="tab-pane fade show active" id="nav-cart" role="tabpanel" aria-labelledby="nav-cart-tab">
+                        <div class="flex-wrapper row wow fadeIn text-info">
+                            <div class="list-display">
+                                <Cart />
+                            </div>
+                            <div class="dropdown-display">
+                                <CartItem DropdownItem="true" />
+                            </div>
+
+                            <hr />
+
+                            <div class="row pt-4 text-center">
+                                <div class="col text-end">
+                                    <a class="btn btn-success btn-lg" type="button" href="/soelumidstoedin" style="margin-top: 18.5px;">
+                                        Aftur á sølumiðstøðina
+                                    </a>
+                                </div>
+                                <div class="col text-start">
+                                    <button class="btn btn-info btn-lg btns" @onclick="PaymentSection" type="button">
+                                        <i class="fas fa-chevron-right"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+                else if (this.paymentBtnActive == "active")
+                {
+                    <div class="d-flex justify-content-between align-items-center pb-4 pt-4" style="font-size: 30px;">
+                        <span class="text-info">Gjalding</span>
+                        <span class="badge bg-success rounded-pill e-display-none"></span>
+                    </div>
+                    <div class="tab-pane fade show active" id="nav-payment" role="tabpanel" aria-labelledby="nav-payment-tab">
+                        <div class="flex-wrapper row wow fadeIn text-info">
+                            <div class="container" style="max-width: 350px;">
+                                <table>
+                                    <tr>
+                                        <td><h3>Tín bústaður</h3></td>
+                                        <td></td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Bústaður</strong></td>
+                                        <td>@AddressModel.Address</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Býur/bygd</strong></td>
+                                        <td>@AddressModel.City</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Postnummar</strong></td>
+                                        <td>@AddressModel.PostalCode</td>
+                                    </tr>
+                                </table>
+                                @*<EditForm Model="@PaymentInfo" OnValidSubmit="@ValidatePaymentInfo">
+                                <DataAnnotationsValidator />
+
+                            </EditForm>*@
+                            </div>
+                            <div class="row pt-4 text-center">
+                                <div class="col text-end">
+                                    <button class="btn btn-outline-info btn-lg btns" @onclick="CartSection" type="button">
+                                        <i class="fas fa-chevron-left"></i>
+                                    </button>
+                                </div>
+                                <div class="col text-start">
+                                    <button class="btn btn-success btn-lg btns" @onclick="CreatePayment">
+                                        <i class="fas fa-check"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    [CascadingParameter] CartStateProvider CartStateProvider { get; set; }
+
+    [Parameter] public string User { get; set; }
+
+    private AddressModel AddressModel { get; set; } = new AddressModel();
+    private AuthModel Auth { get; set; }
+
+    private QuickPayClient QuickPayClient = new QuickPayClient(QuickPayConfig.API_KEY, QuickPayConfig.PRIVATE_KEY, QuickPayConfig.USER);
+
+    private string cartActive;
+    private string paymentActive;
+    private string recieptActive;
+
+    private string cartBtnActive;
+    private string paymentBtnActive;
+    private string recieptBtnActive;
+
+    private int amount;
+
+    protected override async Task OnInitializedAsync()
+    {
+        CartStateProvider.OnChange += StateHasChanged;
+
+        string[] integers = CartStateProvider.GetCartItemTotal().ToString().Split(".");
+
+        if (integers.Length > 1)
+        {
+            this.amount = Int32.Parse(integers[0] + integers[1]);
+        }
+        else
+        {
+            this.amount = Int32.Parse(integers[0] + "00");
+        }
+
+        CartSection();
+
+        if (await ((TreydAuthenticationStateProvider)AuthenticationStateProvider).GetAuthenticationStateAsync() is not null)
+        {
+            var result = await SessionStorage.GetAsync<AuthModel>("user");
+            Auth = result.Success ? result.Value : null;
+        }
+
+        await LoadAddress();
+    }
+
+    protected async Task<bool> LoadAddress()
+    {
+        try
+        {
+            string sql = "select * from addresses join users on addresses.UserID = users.UserID where Email = @Email";
+            AddressModel = await _data.QuerySingle<AddressModel, dynamic>(sql, new { Email = Auth.Email }, _config.GetConnectionString("default"));
+
+            return await Task.FromResult(true);
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+
+            return await Task.FromResult(false);
+        }
+    }
+
+    private async Task<bool> CreatePayment()
+    {
+        try
+        {
+            string orderNumber = QuickPayConfig.GenerateOrderNumber();
+
+            Dictionary<string, string> CreatePaymentVariables = new Dictionary<string, string>();
+
+            CreatePaymentVariables.Add("email", Auth.Email);
+            CreatePaymentVariables.Add("username", Auth.Name);
+
+            Payment payment = await QuickPayClient.Payments.Create("dkk", orderNumber, CreatePaymentVariables);
+
+            PaymentLinkUrl paymentLink = await QuickPayClient.Payments.CreateOrUpdatePaymentLink(
+                payment.Id, this.amount, true, true, "en", "", QuickPayConfig.URL + "/brukari/kassi/kvittan?id=" + orderNumber,
+                QuickPayConfig.URL + "/brukari/kassi/kvittan?id=" + orderNumber, QuickPayConfig.CALLBACKURL, true);
+
+            NavigationManager.NavigateTo(paymentLink.Url);
+
+            return await Task.FromResult(true);
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+
+            return await Task.FromResult(false);
+        }
+    }
+
+    public void CartSection()
+    {
+        this.cartActive = "active";
+        this.paymentActive = "";
+        this.recieptActive = "";
+        this.cartBtnActive = "active";
+        this.paymentBtnActive = "";
+        this.recieptBtnActive = "";
+    }
+
+    public void PaymentSection()
+    {
+        if (CartStateProvider.GetCartItemCount() != 0)
+        {
+            this.cartActive = "active";
+            this.paymentActive = "active";
+            this.recieptActive = "";
+            this.cartBtnActive = "";
+            this.paymentBtnActive = "active";
+            this.recieptBtnActive = "";
+        }
+    }
+
+    public void ReceiptSection()
+    {
+        this.cartActive = "active";
+        this.paymentActive = "active";
+        this.recieptActive = "active";
+        this.cartBtnActive = "";
+        this.paymentBtnActive = "";
+        this.recieptBtnActive = "active";
+    }
+}

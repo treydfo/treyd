@@ -1,0 +1,19 @@
+.card-body[b-zz6hcvbrod] {
+    height: 250px;
+}
+
+.card-body-icon[b-zz6hcvbrod] {
+    position: absolute;
+    z-index: 0;
+    top: 10%;
+    right: -25px;
+    font-size: 8rem;
+    -webkit-transform: rotate(15deg);
+    -ms-transform: rotate(15deg);
+    transform: rotate(15deg);
+}
+
+.c-title[b-zz6hcvbrod] {
+    font-size: 40px;
+    font-weight: 500;
+}

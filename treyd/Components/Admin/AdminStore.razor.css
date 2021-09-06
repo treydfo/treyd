@@ -1,0 +1,40 @@
+﻿.admin-store-toolbar {
+    display: block;
+    position: fixed;
+    left: 0;
+    bottom: 0;
+    width: 100%;
+    padding: 8px 8px;
+    border-top: 1px solid #e3e9ef;
+    background-color: #fff;
+    box-shadow: -1.25rem 0 2rem 0 rgb(43 52 69 / 15%);
+    z-index: 1040;
+}
+
+.admin-store-toolbar-item {
+    cursor: pointer;
+    padding: .5rem;
+    padding-top: .125rem;
+    border-left: 1px solid #e3e9ef;
+    text-align: center;
+}
+
+.admin-store-toolbar-icon {
+    display: block;
+    color: #0e3976;
+    font-size: 1.25rem;
+}
+
+.admin-store-toolbar-label {
+    display: block;
+    color: #0e3976;
+    font-size: .6875rem;
+}
+
+.admin-store-toolbar-item:first-child {
+    border-right: 0;
+}
+
+.table-layout-fixed {
+    table-layout: fixed !important;
+}

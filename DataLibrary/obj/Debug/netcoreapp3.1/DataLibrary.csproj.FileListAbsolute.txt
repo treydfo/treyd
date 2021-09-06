@@ -1,0 +1,17 @@
+C:\Users\JonSi\ASP.NETProjects\treyd\treyd\DataLibrary\bin\Debug\netcoreapp3.1\DataLibrary.deps.json
+C:\Users\JonSi\ASP.NETProjects\treyd\treyd\DataLibrary\bin\Debug\netcoreapp3.1\DataLibrary.dll
+C:\Users\JonSi\ASP.NETProjects\treyd\treyd\DataLibrary\bin\Debug\netcoreapp3.1\DataLibrary.pdb
+C:\Users\JonSi\ASP.NETProjects\treyd\treyd\DataLibrary\obj\Debug\netcoreapp3.1\DataLibrary.AssemblyInfoInputs.cache
+C:\Users\JonSi\ASP.NETProjects\treyd\treyd\DataLibrary\obj\Debug\netcoreapp3.1\DataLibrary.AssemblyInfo.cs
+C:\Users\JonSi\ASP.NETProjects\treyd\treyd\DataLibrary\obj\Debug\netcoreapp3.1\DataLibrary.csproj.CoreCompileInputs.cache
+C:\Users\JonSi\ASP.NETProjects\treyd\treyd\DataLibrary\obj\Debug\netcoreapp3.1\DataLibrary.dll
+C:\Users\JonSi\ASP.NETProjects\treyd\treyd\DataLibrary\obj\Debug\netcoreapp3.1\DataLibrary.pdb
+C:\Forritan\Visual Studio 2019\Projects\treyd\treyd\DataLibrary\bin\Debug\netcoreapp3.1\DataLibrary.deps.json
+C:\Forritan\Visual Studio 2019\Projects\treyd\treyd\DataLibrary\bin\Debug\netcoreapp3.1\DataLibrary.dll
+C:\Forritan\Visual Studio 2019\Projects\treyd\treyd\DataLibrary\bin\Debug\netcoreapp3.1\DataLibrary.pdb
+C:\Forritan\Visual Studio 2019\Projects\treyd\treyd\DataLibrary\obj\Debug\netcoreapp3.1\DataLibrary.csprojAssemblyReference.cache
+C:\Forritan\Visual Studio 2019\Projects\treyd\treyd\DataLibrary\obj\Debug\netcoreapp3.1\DataLibrary.AssemblyInfoInputs.cache
+C:\Forritan\Visual Studio 2019\Projects\treyd\treyd\DataLibrary\obj\Debug\netcoreapp3.1\DataLibrary.AssemblyInfo.cs
+C:\Forritan\Visual Studio 2019\Projects\treyd\treyd\DataLibrary\obj\Debug\netcoreapp3.1\DataLibrary.csproj.CoreCompileInputs.cache
+C:\Forritan\Visual Studio 2019\Projects\treyd\treyd\DataLibrary\obj\Debug\netcoreapp3.1\DataLibrary.dll
+C:\Forritan\Visual Studio 2019\Projects\treyd\treyd\DataLibrary\obj\Debug\netcoreapp3.1\DataLibrary.pdb
